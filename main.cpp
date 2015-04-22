@@ -1,35 +1,28 @@
-#include "Card.hpp"
-#include <random>
-#include <algorithm>
+#include "Pile.hpp"
 using namespace std;
 
 int main(int argc, char** argv)
 {
-    Card deck[52];
+    Pile<52> deck;
 
-    auto c = deck;
     for (int i = 0; i < 4; ++i)
     {
         for (int j = 2; j <= 14; ++j)
-            *c++ = Card(j, i);
+            deck.Push(Card(j, i));
     }
 
     mt19937 mt;
-    shuffle(deck + 0, deck + 52, mt);
+    deck.Shuffle(mt);
 
-    for (int i = 0; i < 52; ++i)
-        cout << deck[i] << '\n';
+    Pile<13> hand;
+    for (int i = 0; i < 13; ++i)
+        hand.Push(deck.Pop());
 
-    cout << endl;
+    hand.Sort();
 
-    sort(deck, deck + 52);
+    cout << "My Hand: " << hand << endl;
 
-    for (int i = 0; i < 52; ++i)
-        cout << deck[i] << '\n';
-
-    cout << endl;
-
-    cout << sizeof(deck) << endl;
+    cout << sizeof(Card) << endl;
 
     return 0;
 }
