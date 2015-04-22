@@ -17,6 +17,7 @@ const int Ace = 14;
 class Card
 {
     public:
+        Card() : _data(0) {}
         Card(int value, int suit) : _data((suit << 6) | value) {}
         Card(const Card&) = default;
         ~Card() = default;
