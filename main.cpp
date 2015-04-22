@@ -22,6 +22,10 @@ int main(int argc, char** argv)
 
     cout << "My Hand: " << hand << endl;
 
+    cout << "Remove " << hand.Remove(1) << endl;
+
+    cout << "My Hand: " << hand << endl;
+
     cout << sizeof(Card) << endl;
     cout << sizeof(deck) << endl;
 

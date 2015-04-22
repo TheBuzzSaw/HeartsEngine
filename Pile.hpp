@@ -20,6 +20,17 @@ class Pile
         void Sort() { std::sort(_cards, _cards + _count); }
         void Shuffle(std::mt19937& mt) { shuffle(_cards, _cards + _count, mt); }
 
+        Card Remove(size_t index)
+        {
+            Card result = _cards[index];
+
+            for (size_t i = index + 1; i < _count; ++i)
+                _cards[i - 1] = _cards[i];
+
+            --_count;
+            return result;
+        }
+
         size_t Count() const { return _count; }
         Card Get(size_t index) const { return _cards[index]; }
 
