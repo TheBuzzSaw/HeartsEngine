@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <random>
 
-template<size_t N>
+template<uint8_t N>
 class Pile
 {
     public:
@@ -26,10 +26,10 @@ class Pile
     protected:
     private:
         Card _cards[N];
-        size_t _count;
+        uint8_t _count;
 };
 
-template<size_t N>
+template<uint8_t N>
 std::ostream& operator<<(std::ostream& stream, const Pile<N>& pile)
 {
     if (pile.Count() > 0)

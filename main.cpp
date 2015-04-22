@@ -23,6 +23,7 @@ int main(int argc, char** argv)
     cout << "My Hand: " << hand << endl;
 
     cout << sizeof(Card) << endl;
+    cout << sizeof(deck) << endl;
 
     return 0;
 }
