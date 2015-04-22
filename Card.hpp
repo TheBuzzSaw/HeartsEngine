@@ -9,6 +9,11 @@ const int Diamonds = 1;
 const int Spades = 2;
 const int Hearts = 3;
 
+const int Jack = 11;
+const int Queen = 12;
+const int King = 13;
+const int Ace = 14;
+
 class Card
 {
     public:
@@ -25,5 +30,30 @@ class Card
     private:
         uint8_t _data;
 };
+
+std::ostream& operator<<(std::ostream& stream, Card card)
+{
+    switch (card.Value())
+    {
+        case Jack: stream << "Jack"; break;
+        case Queen: stream << "Queen"; break;
+        case King: stream << "King"; break;
+        case Ace: stream << "Ace"; break;
+        default: stream << card.Value(); break;
+    }
+
+    stream << " of ";
+
+    switch (card.Suit())
+    {
+        case Clubs: stream << "clubs"; break;
+        case Diamonds: stream << "diamonds"; break;
+        case Spades: stream << "spades"; break;
+        case Hearts: stream << "hearts"; break;
+        default: stream << "BLAM"; break;
+    }
+
+    return stream;
+}
 
 #endif

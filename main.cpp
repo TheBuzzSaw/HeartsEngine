@@ -3,9 +3,9 @@ using namespace std;
 
 int main(int argc, char** argv)
 {
-    Card c(2, Hearts);
+    Card c(Ace, Hearts);
 
-    cout << c.Value() << " of " << c.Suit() << endl;
+    cout << c << endl;
 
     return 0;
 }
