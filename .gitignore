@@ -26,3 +26,10 @@
 *.exe
 *.out
 *.app
+
+# CodeBlocks
+bin/
+obj/
+*.depend
+*.cbTemp
+*.layout
