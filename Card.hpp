@@ -17,7 +17,7 @@ const int Ace = 14;
 class Card
 {
     public:
-        Card() : _data(0) {}
+        Card() {}
         Card(int value, int suit) : _data((suit << 6) | value) {}
         Card(const Card&) = default;
         ~Card() = default;
@@ -26,6 +26,8 @@ class Card
 
         int Value() const { return _data & 0x3f; }
         int Suit() const { return _data >> 6; }
+
+        bool operator<(const Card& other) { return _data < other._data; }
 
     protected:
     private:
