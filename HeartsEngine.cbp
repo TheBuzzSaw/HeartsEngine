@@ -33,6 +33,8 @@
 			<Add option="-Wall" />
 		</Compiler>
 		<Unit filename="Card.hpp" />
+		<Unit filename="Game.cpp" />
+		<Unit filename="Game.hpp" />
 		<Unit filename="Pile.hpp" />
 		<Unit filename="main.cpp" />
 		<Extensions>

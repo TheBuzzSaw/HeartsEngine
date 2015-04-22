@@ -17,6 +17,7 @@ class Pile
 
         void Push(Card card) { _cards[_count++] = card; }
         Card Pop() { return _cards[--_count]; }
+        void Clear() { _count = 0; }
         void Sort() { std::sort(_cards, _cards + _count); }
         void Shuffle(std::mt19937& mt) { shuffle(_cards, _cards + _count, mt); }
 
@@ -32,6 +33,7 @@ class Pile
         }
 
         size_t Count() const { return _count; }
+        bool IsEmpty() const { return _count == 0; }
         Card Get(size_t index) const { return _cards[index]; }
 
     protected:

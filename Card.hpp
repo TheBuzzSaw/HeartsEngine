@@ -27,6 +27,7 @@ class Card
         int Value() const { return _data & 0x3f; }
         int Suit() const { return _data >> 6; }
 
+        bool operator==(const Card& other) { return _data == other._data; }
         bool operator<(const Card& other) { return _data < other._data; }
 
     protected:
