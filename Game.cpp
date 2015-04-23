@@ -1,6 +1,7 @@
 #include "Game.hpp"
 #include "Pile.hpp"
 #include <chrono>
+#include <fstream>
 #include <lua.hpp>
 using namespace std;
 
@@ -51,6 +52,7 @@ struct Player
     int playFunction = LUA_NOREF;
     int viewFunction = LUA_NOREF;
 
+    int id = 0;
     int localScore = 0;
     int overallScore = 0;
     Pile<13> hand;
@@ -69,6 +71,24 @@ struct Game
     int pass = 3;
     Player players[4];
 };
+
+static int LuaLog(lua_State* state)
+{
+    auto argc = lua_gettop(state);
+
+    char logFile[] = "log.0.txt";
+    Player* player = reinterpret_cast<Player*>(GetData(state, PlayerLuaKey));
+    logFile[4] = '0' + player->id;
+    ofstream fout(logFile, ofstream::binary);
+
+    for (int i = 0; i < argc; ++i)
+    {
+        fout << lua_tostring(state, i + 1) << '\n';
+    }
+
+    fout.close();
+    return 0;
+}
 
 static int LuaIsHeartsBroken(lua_State* state)
 {
@@ -92,6 +112,8 @@ Player::Player()
     lua_setfield(state, -2, "blargh");
     lua_pushcfunction(state, LuaIsHeartsBroken);
     lua_setfield(state, -2, "broken");
+    lua_pushcfunction(state, LuaLog);
+    lua_setfield(state, -2, "log");
     lua_pop(state, 1);
 
     SetData(state, PlayerLuaKey, this);
@@ -104,8 +126,12 @@ Player::~Player()
 
 Game::Game() : mt(chrono::system_clock::now().time_since_epoch().count())
 {
+    int id = 0;
     for (auto& player : players)
+    {
+        player.id = ++id;
         SetData(player.state, GameLuaKey, this);
+    }
 }
 
 void PlayGame(const GameParameters& gp)
@@ -114,11 +140,12 @@ void PlayGame(const GameParameters& gp)
 
     for (int i = 0; i < 4; ++i)
     {
+        auto& player = game.players[i];
         auto path = gp.scripts[i];
         if (path && *path)
         {
-            auto result = luaL_dofile(game.players[i].state, path);
-            if (result) ReportErrors(game.players[i].state);
+            auto result = luaL_dofile(player.state, path);
+            if (result) ReportErrors(player.state);
         }
     }
 

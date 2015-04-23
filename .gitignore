@@ -33,3 +33,6 @@ obj/
 *.depend
 *.cbTemp
 *.layout
+
+# HeartsEngine
+log.*
