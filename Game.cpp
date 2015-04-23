@@ -6,7 +6,25 @@ using namespace std;
 
 static const int Passes[4] = { -1, +1, +2, 0 };
 static const char* const PackageName = "hearts";
-static const void* const LuaKey = PackageName;
+
+static void* const PlayerLuaKey = (void*)0xbaba;
+static void* const GameLuaKey = (void*)0xecec;
+
+static void SetData(lua_State* state, void* key, void* value)
+{
+    lua_pushlightuserdata(state, key);
+    lua_pushlightuserdata(state, value);
+    lua_settable(state, LUA_REGISTRYINDEX);
+}
+
+static void* GetData(lua_State* state, void* key)
+{
+    lua_pushlightuserdata(state, key);
+    lua_gettable(state, LUA_REGISTRYINDEX);
+    void* result = lua_touserdata(state, -1);
+    lua_pop(state, 1);
+    return result;
+}
 
 static void ReportErrors(lua_State* state)
 {
@@ -29,6 +47,9 @@ struct Player
     Player& operator=(const Player&) = delete;
 
     lua_State* state = nullptr;
+    int passFunction = LUA_NOREF;
+    int playFunction = LUA_NOREF;
+
     int localScore = 0;
     int overallScore = 0;
     Pile<13> hand;
@@ -45,7 +66,11 @@ Player::Player()
     lua_getglobal(state, PackageName);
     lua_pushcfunction(state, DebugPrint);
     lua_setfield(state, -2, "dump");
+    lua_pushcfunction(state, DebugPrint);
+    lua_setfield(state, -2, "blargh");
     lua_pop(state, 1);
+
+    SetData(state, PlayerLuaKey, this);
 }
 
 Player::~Player()
@@ -55,11 +80,23 @@ Player::~Player()
 
 struct Game
 {
+    Game();
+    Game(const Game&) = delete;
+    ~Game() = default;
+
+    Game& operator=(const Game&) = delete;
+
     mt19937 mt;
     bool heartsBroken = false;
     int pass = 3;
     Player players[4];
 };
+
+Game::Game() : mt(chrono::system_clock::now().time_since_epoch().count())
+{
+    for (auto& player : players)
+        SetData(player.state, GameLuaKey, this);
+}
 
 void PlayGame(const GameParameters& gp)
 {
@@ -74,8 +111,6 @@ void PlayGame(const GameParameters& gp)
             if (result) ReportErrors(game.players[i].state);
         }
     }
-
-    game.mt.seed(chrono::system_clock::now().time_since_epoch().count());
 
     Pile<52> deck;
 

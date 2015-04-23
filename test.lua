@@ -1,2 +1,2 @@
 print("HUZZAH");
-hearts.dump(1);
+hearts.blargh(1);
