@@ -49,34 +49,12 @@ struct Player
     lua_State* state = nullptr;
     int passFunction = LUA_NOREF;
     int playFunction = LUA_NOREF;
+    int viewFunction = LUA_NOREF;
 
     int localScore = 0;
     int overallScore = 0;
     Pile<13> hand;
 };
-
-Player::Player()
-{
-    state = luaL_newstate();
-    luaL_openlibs(state);
-
-    lua_newtable(state);
-    lua_setglobal(state, PackageName);
-
-    lua_getglobal(state, PackageName);
-    lua_pushcfunction(state, DebugPrint);
-    lua_setfield(state, -2, "dump");
-    lua_pushcfunction(state, DebugPrint);
-    lua_setfield(state, -2, "blargh");
-    lua_pop(state, 1);
-
-    SetData(state, PlayerLuaKey, this);
-}
-
-Player::~Player()
-{
-    lua_close(state);
-}
 
 struct Game
 {
@@ -91,6 +69,38 @@ struct Game
     int pass = 3;
     Player players[4];
 };
+
+static int LuaIsHeartsBroken(lua_State* state)
+{
+    Game* game = reinterpret_cast<Game*>(GetData(state, GameLuaKey));
+    lua_pushboolean(state, game->heartsBroken);
+    return 1;
+}
+
+Player::Player()
+{
+    state = luaL_newstate();
+    luaL_openlibs(state);
+
+    lua_newtable(state);
+    lua_setglobal(state, PackageName);
+
+    lua_getglobal(state, PackageName);
+    lua_pushcfunction(state, DebugPrint);
+    lua_setfield(state, -2, "dump");
+    lua_pushcfunction(state, DebugPrint);
+    lua_setfield(state, -2, "blargh");
+    lua_pushcfunction(state, LuaIsHeartsBroken);
+    lua_setfield(state, -2, "broken");
+    lua_pop(state, 1);
+
+    SetData(state, PlayerLuaKey, this);
+}
+
+Player::~Player()
+{
+    lua_close(state);
+}
 
 Game::Game() : mt(chrono::system_clock::now().time_since_epoch().count())
 {
