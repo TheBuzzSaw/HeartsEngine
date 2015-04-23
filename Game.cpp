@@ -1,6 +1,9 @@
 #include "Game.hpp"
 #include "Pile.hpp"
+#include <chrono>
 using namespace std;
+
+const int Passes[4] = { -1, +1, +2, 0 };
 
 struct Player
 {
@@ -9,10 +12,19 @@ struct Player
     Pile<13> hand;
 };
 
+struct Game
+{
+    mt19937 mt;
+    bool heartsBroken = false;
+    int pass = 3;
+    Player players[4];
+};
+
 void PlayGame()
 {
-    bool heartsBroken = false;
-    Player players[4];
+    Game game;
+
+    game.mt.seed(chrono::system_clock::now().time_since_epoch().count());
 
     Pile<52> deck;
 
@@ -22,14 +34,13 @@ void PlayGame()
             deck.Push(Card(j, i));
     }
 
-    mt19937 mt;
-    deck.Shuffle(mt);
+    deck.Shuffle(game.mt);
 
     for (int i = 0; i < 52; ++i)
-        players[i & 3].hand.Push(deck.Pop()); // Deal like a human!
+        game.players[i & 3].hand.Push(deck.Pop()); // Deal like a human!
 
-    for (int i = 0; i < 4; ++i) players[i].hand.Sort();
+    for (int i = 0; i < 4; ++i) game.players[i].hand.Sort();
 
     for (int i = 0; i < 4; ++i)
-        cout << "Player " << (i + 1) << ": " << players[i].hand << endl;
+        cout << "Player " << (i + 1) << ": " << game.players[i].hand << endl;
 }

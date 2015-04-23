@@ -38,8 +38,8 @@ class Pile
 
     protected:
     private:
-        Card _cards[N];
         uint8_t _count;
+        Card _cards[N];
 };
 
 template<uint8_t N>
