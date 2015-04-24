@@ -56,6 +56,7 @@ struct Player
     int localScore = 0;
     int overallScore = 0;
     Pile<13> hand;
+    ofstream log;
 };
 
 struct Game
@@ -76,17 +77,13 @@ static int LuaLog(lua_State* state)
 {
     auto argc = lua_gettop(state);
 
-    char logFile[] = "log.0.txt";
     Player* player = reinterpret_cast<Player*>(GetData(state, PlayerLuaKey));
-    logFile[4] = '0' + player->id;
-    ofstream fout(logFile, ofstream::binary);
 
     for (int i = 0; i < argc; ++i)
     {
-        fout << lua_tostring(state, i + 1) << '\n';
+        player->log << lua_tostring(state, i + 1) << '\n';
     }
 
-    fout.close();
     return 0;
 }
 
@@ -122,14 +119,18 @@ Player::Player()
 Player::~Player()
 {
     lua_close(state);
+    log.close();
 }
 
 Game::Game() : mt(chrono::system_clock::now().time_since_epoch().count())
 {
     int id = 0;
+    char logFile[] = "log.0.txt";
     for (auto& player : players)
     {
         player.id = ++id;
+        logFile[4] = '0' + player.id;
+        player.log.open(logFile, ofstream::binary);
         SetData(player.state, GameLuaKey, this);
     }
 }
