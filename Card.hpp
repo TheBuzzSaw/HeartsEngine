@@ -18,7 +18,7 @@ class Card
 {
     public:
         Card() {}
-        Card(int value, int suit) : _data((suit << 6) | value) {}
+        constexpr Card(int value, int suit) : _data((suit << 6) | value) {}
         Card(const Card&) = default;
         ~Card() = default;
 

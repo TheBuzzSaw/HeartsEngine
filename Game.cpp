@@ -5,7 +5,7 @@
 #include <lua.hpp>
 using namespace std;
 
-static const int Passes[4] = { -1, +1, +2, 0 };
+static const int Passes[4] = { 3, 1, 2, 0 };
 static const char* const PackageName = "hearts";
 
 static void* const PlayerLuaKey = (void*)0xbaba;
@@ -56,6 +56,7 @@ struct Player
     int localScore = 0;
     int overallScore = 0;
     Pile<13> hand;
+    Pile<3> pass;
     ofstream log;
 };
 
@@ -75,6 +76,26 @@ struct Game
     int scoreLimit = 0;
     Player players[4];
 };
+
+static int LuaSetPassFunction(lua_State* state)
+{
+    auto argc = lua_gettop(state);
+
+    if (argc > 0 && lua_isfunction(state, 1))
+    {
+        lua_settop(state, 1);
+
+        Player* player =
+            reinterpret_cast<Player*>(GetData(state, PlayerLuaKey));
+
+        if (player->passFunction != LUA_NOREF)
+            luaL_unref(state, LUA_REGISTRYINDEX, player->passFunction);
+
+        player->passFunction = luaL_ref(state, LUA_REGISTRYINDEX);
+    }
+
+    return 0;
+}
 
 static int LuaLog(lua_State* state)
 {
@@ -117,6 +138,8 @@ Player::Player()
     lua_setfield(state, -2, "broken");
     lua_pushcfunction(state, LuaLog);
     lua_setfield(state, -2, "log");
+    lua_pushcfunction(state, LuaSetPassFunction);
+    lua_setfield(state, -2, "pass");
     lua_pop(state, 1);
 
     SetData(state, PlayerLuaKey, this);
@@ -182,13 +205,52 @@ void PlayGame(const GameParameters& gp)
 {
     Game game(gp);
     int leadPlayer = uniform_int_distribution<int>(0, 3)(game.mt);
+    int pass = -1;
 
     for (int i = 0; i < 4; ++i)
         cout << "Player " << (i + 1) << ": " << game.players[i].hand << endl;
 
     while (game.HighestScore() < game.scoreLimit)
     {
+        pass = (pass + 1) & 3;
+        int offset = Passes[pass];
+
+        if (offset != 0)
+        {
+            for (auto& player : game.players)
+            {
+                if (player.passFunction != LUA_NOREF)
+                {
+                    lua_rawgeti(
+                        player.state,
+                        LUA_REGISTRYINDEX,
+                        player.passFunction);
+
+                    auto status = lua_pcall(player.state, 0, 3, 0);
+                    if (status)
+                    {
+                        ReportErrors(player.state);
+                    }
+                    else
+                    {
+                        for (int i = 0; i < 3; ++i)
+                        {
+                            auto type = lua_type(player.state, i + 1);
+                            cout << lua_typename(player.state, type) << endl;
+                        }
+
+                        lua_settop(player.state, 0);
+                    }
+                }
+                else
+                {
+                    cerr << "No pass function...\n";
+                }
+            }
+        }
+
         break;
+
         for (int i = 0; i < 13; ++i)
         {
             Pile<4> play;
