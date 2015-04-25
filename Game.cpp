@@ -156,21 +156,6 @@ Game::Game(const GameParameters& gp)
     : mt(chrono::system_clock::now().time_since_epoch().count())
     , parameters(gp)
 {
-    parameters.scoreLimit = max(gp.scoreLimit, 1);
-
-    Pile<52> deck;
-
-    for (int i = 0; i < 4; ++i)
-    {
-        for (int j = 2; j <= 14; ++j)
-            deck.Push(Card(j, i));
-    }
-
-    deck.Shuffle(mt);
-
-    for (int i = 0; i < 52; ++i)
-        players[i & 3].hand.Push(deck.Pop()); // Deal like a human!
-
     int id = 0;
     char logFile[] = "log.0.txt";
 
@@ -209,13 +194,27 @@ void PlayGame(const GameParameters& gp)
     int leadPlayer = uniform_int_distribution<int>(0, 3)(game.mt);
     int pass = -1;
 
-    for (int i = 0; i < 4; ++i)
-        cout << "Player " << (i + 1) << ": " << game.players[i].hand << endl;
-
     while (game.HighestScore() < game.parameters.scoreLimit)
     {
         pass = (pass + 1) & 3;
         int offset = Passes[pass];
+
+        Pile<52> deck;
+
+        for (int i = 0; i < 4; ++i)
+        {
+            for (int j = 2; j <= 14; ++j)
+                deck.Push(Card(j, i));
+        }
+
+        deck.Shuffle(game.mt);
+
+        for (int i = 0; i < 52; ++i)
+            game.players[i & 3].hand.Push(deck.Pop()); // Deal like a human!
+
+        for (int i = 0; i < 4; ++i)
+            cout << "Player " << (i + 1) << ": " <<
+                game.players[i].hand << endl;
 
         if (offset != 0)
         {
