@@ -34,7 +34,7 @@ class Pile
 
         size_t Count() const { return _count; }
         bool IsEmpty() const { return _count == 0; }
-        Card Get(size_t index) const { return _cards[index]; }
+        Card View(size_t index) const { return _cards[index]; }
 
     protected:
     private:
@@ -47,10 +47,10 @@ std::ostream& operator<<(std::ostream& stream, const Pile<N>& pile)
 {
     if (pile.Count() > 0)
     {
-        stream << pile.Get(0);
+        stream << pile.View(0);
 
         for (size_t i = 1; i < pile.Count(); ++i)
-            stream << ", " << pile.Get(i);
+            stream << ", " << pile.View(i);
     }
 
     return stream;

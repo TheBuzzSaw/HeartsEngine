@@ -61,15 +61,18 @@ struct Player
 
 struct Game
 {
-    Game();
+    Game(const GameParameters& gp);
     Game(const Game&) = delete;
     ~Game() = default;
 
     Game& operator=(const Game&) = delete;
 
+    int HighestScore() const;
+
     mt19937 mt;
     bool heartsBroken = false;
     int pass = 3;
+    int scoreLimit = 0;
     Player players[4];
 };
 
@@ -81,7 +84,10 @@ static int LuaLog(lua_State* state)
 
     for (int i = 0; i < argc; ++i)
     {
-        player->log << lua_tostring(state, i + 1) << '\n';
+        auto value = lua_tostring(state, i + 1);
+
+        if (value && *value)
+            player->log << value << '\n';
     }
 
     return 0;
@@ -122,33 +128,10 @@ Player::~Player()
     log.close();
 }
 
-Game::Game() : mt(chrono::system_clock::now().time_since_epoch().count())
+Game::Game(const GameParameters& gp)
+    : mt(chrono::system_clock::now().time_since_epoch().count())
 {
-    int id = 0;
-    char logFile[] = "log.0.txt";
-    for (auto& player : players)
-    {
-        player.id = ++id;
-        logFile[4] = '0' + player.id;
-        player.log.open(logFile, ofstream::binary);
-        SetData(player.state, GameLuaKey, this);
-    }
-}
-
-void PlayGame(const GameParameters& gp)
-{
-    Game game;
-
-    for (int i = 0; i < 4; ++i)
-    {
-        auto& player = game.players[i];
-        auto path = gp.scripts[i];
-        if (path && *path)
-        {
-            auto result = luaL_dofile(player.state, path);
-            if (result) ReportErrors(player.state);
-        }
-    }
+    scoreLimit = max(gp.scoreLimit, 1);
 
     Pile<52> deck;
 
@@ -158,13 +141,63 @@ void PlayGame(const GameParameters& gp)
             deck.Push(Card(j, i));
     }
 
-    deck.Shuffle(game.mt);
+    deck.Shuffle(mt);
 
     for (int i = 0; i < 52; ++i)
-        game.players[i & 3].hand.Push(deck.Pop()); // Deal like a human!
+        players[i & 3].hand.Push(deck.Pop()); // Deal like a human!
 
-    for (int i = 0; i < 4; ++i) game.players[i].hand.Sort();
+    int id = 0;
+    char logFile[] = "log.0.txt";
+
+    for (int i = 0; i < 4; ++i)
+    {
+        auto& player = players[i];
+
+        player.hand.Sort();
+        player.id = ++id;
+        logFile[4] = '0' + player.id;
+        player.log.open(logFile, ofstream::binary);
+        SetData(player.state, GameLuaKey, this);
+
+        auto path = gp.scripts[i];
+        if (path && *path)
+        {
+            auto result = luaL_dofile(player.state, path);
+            if (result) ReportErrors(player.state);
+        }
+    }
+}
+
+int Game::HighestScore() const
+{
+    int result = 0;
+
+    for (const auto& player : players)
+        result = max(result, player.overallScore);
+
+    return result;
+}
+
+void PlayGame(const GameParameters& gp)
+{
+    Game game(gp);
+    int leadPlayer = uniform_int_distribution<int>(0, 3)(game.mt);
 
     for (int i = 0; i < 4; ++i)
         cout << "Player " << (i + 1) << ": " << game.players[i].hand << endl;
+
+    while (game.HighestScore() < game.scoreLimit)
+    {
+        break;
+        for (int i = 0; i < 13; ++i)
+        {
+            Pile<4> play;
+
+            for (int j = 0; j < 4; ++j)
+            {
+                auto& player = game.players[(leadPlayer + j) & 3];
+                // Player plays card.
+            }
+        }
+    }
 }
