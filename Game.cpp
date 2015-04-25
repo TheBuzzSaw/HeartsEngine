@@ -2,6 +2,7 @@
 #include "Pile.hpp"
 #include <chrono>
 #include <fstream>
+#include <cassert>
 #include <lua.hpp>
 using namespace std;
 
@@ -73,7 +74,7 @@ struct Game
     mt19937 mt;
     bool heartsBroken = false;
     int pass = 3;
-    int scoreLimit = 0;
+    GameParameters parameters;
     Player players[4];
 };
 
@@ -153,8 +154,9 @@ Player::~Player()
 
 Game::Game(const GameParameters& gp)
     : mt(chrono::system_clock::now().time_since_epoch().count())
+    , parameters(gp)
 {
-    scoreLimit = max(gp.scoreLimit, 1);
+    parameters.scoreLimit = max(gp.scoreLimit, 1);
 
     Pile<52> deck;
 
@@ -210,7 +212,7 @@ void PlayGame(const GameParameters& gp)
     for (int i = 0; i < 4; ++i)
         cout << "Player " << (i + 1) << ": " << game.players[i].hand << endl;
 
-    while (game.HighestScore() < game.scoreLimit)
+    while (game.HighestScore() < game.parameters.scoreLimit)
     {
         pass = (pass + 1) & 3;
         int offset = Passes[pass];
@@ -219,6 +221,9 @@ void PlayGame(const GameParameters& gp)
         {
             for (auto& player : game.players)
             {
+                player.pass.Clear();
+                int cardIndices[3] = {};
+
                 if (player.passFunction != LUA_NOREF)
                 {
                     lua_rawgeti(
@@ -235,6 +240,7 @@ void PlayGame(const GameParameters& gp)
                     {
                         for (int i = 0; i < 3; ++i)
                         {
+                            cardIndices[i] = lua_tointeger(player.state, i + 1);
                             auto type = lua_type(player.state, i + 1);
                             cout << lua_typename(player.state, type) << endl;
                         }
@@ -246,6 +252,61 @@ void PlayGame(const GameParameters& gp)
                 {
                     cerr << "No pass function...\n";
                 }
+
+                cout << "Card Indices:";
+
+                for (int i = 0; i < 3; ++i)
+                    cout << ' ' << cardIndices[i];
+
+                cout << endl;
+
+                sort(cardIndices, cardIndices + 3);
+
+                bool selectionIsValid = true;
+
+                for (int i = 0; i < 3; ++i)
+                {
+                    auto cardIndex = cardIndices[i];
+
+                    if (cardIndex < 1 || cardIndex > 13)
+                    {
+                        selectionIsValid = false;
+                        cerr << "invalid card index -- " << cardIndex << '\n';
+                    }
+                }
+
+                if (cardIndices[0] >= cardIndices[1] ||
+                    cardIndices[1] >= cardIndices[2])
+                {
+                    selectionIsValid = false;
+                    cerr << "failed to select three distinct cards\n";
+                }
+
+                if (!selectionIsValid)
+                {
+                    cardIndices[0] = 11;
+                    cardIndices[1] = 12;
+                    cardIndices[2] = 13;
+                }
+
+                for (int i = 0; i < 3; ++i)
+                    player.pass.Push(
+                        player.hand.Remove(
+                            cardIndices[2 - i] - 1));
+            }
+
+            for (int i = 0; i < 4; ++i)
+            {
+                auto& giver = game.players[i];
+                auto& recipient = game.players[(i + offset) & 3];
+
+                assert(giver.pass.IsFull());
+                assert(!recipient.hand.IsFull());
+
+                for (int j = 0; j < 3; ++j)
+                    recipient.hand.Push(giver.pass.Pop());
+
+                recipient.hand.Sort();
             }
         }
 

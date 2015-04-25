@@ -34,6 +34,7 @@ class Pile
 
         size_t Count() const { return _count; }
         bool IsEmpty() const { return _count == 0; }
+        bool IsFull() const { return _count == N; }
         Card View(size_t index) const { return _cards[index]; }
 
     protected:
