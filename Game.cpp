@@ -137,19 +137,24 @@ Player::Player()
     lua_newtable(state);
     lua_setglobal(state, PackageName);
 
+    const luaL_Reg HeartsLibrary[] = {
+        {"dump", DebugPrint},
+        {"blargh", DebugPrint},
+        {"broken", LuaIsHeartsBroken},
+        {"log", LuaLog},
+        {"pass", LuaSetPassFunction},
+        {"hand_size", LuaGetHandSize},
+        {nullptr, nullptr}
+    };
+
     lua_getglobal(state, PackageName);
-    lua_pushcfunction(state, DebugPrint);
-    lua_setfield(state, -2, "dump");
-    lua_pushcfunction(state, DebugPrint);
-    lua_setfield(state, -2, "blargh");
-    lua_pushcfunction(state, LuaIsHeartsBroken);
-    lua_setfield(state, -2, "broken");
-    lua_pushcfunction(state, LuaLog);
-    lua_setfield(state, -2, "log");
-    lua_pushcfunction(state, LuaSetPassFunction);
-    lua_setfield(state, -2, "pass");
-    lua_pushcfunction(state, LuaGetHandSize);
-    lua_setfield(state, -2, "hand_size");
+
+    for (auto i = HeartsLibrary; i->name; ++i)
+    {
+        lua_pushcfunction(state, i->func);
+        lua_setfield(state, -2, i->name);
+    }
+
     lua_pop(state, 1);
 
     SetData(state, PlayerLuaKey, this);
