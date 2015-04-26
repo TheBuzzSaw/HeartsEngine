@@ -1,5 +1,5 @@
 function pass_cards()
-    print("pass_cards");
+    print("I have " .. tostring(hearts.hand_size()) .. " cards!");
     return nil, 1, true, 1;
 end
 

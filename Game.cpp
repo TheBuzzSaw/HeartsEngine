@@ -78,6 +78,13 @@ struct Game
     Player players[4];
 };
 
+static int LuaGetHandSize(lua_State* state)
+{
+    Player* player = reinterpret_cast<Player*>(GetData(state, PlayerLuaKey));
+    lua_pushinteger(state, player->hand.Count());
+    return 1;
+}
+
 static int LuaSetPassFunction(lua_State* state)
 {
     auto argc = lua_gettop(state);
@@ -141,6 +148,8 @@ Player::Player()
     lua_setfield(state, -2, "log");
     lua_pushcfunction(state, LuaSetPassFunction);
     lua_setfield(state, -2, "pass");
+    lua_pushcfunction(state, LuaGetHandSize);
+    lua_setfield(state, -2, "hand_size");
     lua_pop(state, 1);
 
     SetData(state, PlayerLuaKey, this);
